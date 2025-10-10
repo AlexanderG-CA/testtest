@@ -1,6 +1,6 @@
-using System.Diagnostics;
 using BAMF_MVC.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace BAMF_MVC.Controllers
 {
