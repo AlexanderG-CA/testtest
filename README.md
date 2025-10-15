@@ -1,2 +1,2 @@
-# BAMF-MVC
-The ASP.NET MVC webbapp for our website BAMF
+# BAMF-REACT
+The React webbapp for our website BAMF
