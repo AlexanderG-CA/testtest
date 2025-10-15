@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 // @ts-ignore: Allow side-effect import of global CSS without module declarations
 import "./globals.css";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,10 +32,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         style={{ backgroundColor: "#171010" }}
       >
-        <div id="blurOverlay" className="fixed w-full h-full backdrop-blur-sm z-25 hidden" />
-        <Navbar />
-        {children}
-        <Footer />
+        <AuthProvider>
+          <div id="blurOverlay" className="fixed w-full h-full backdrop-blur-sm z-25 hidden" />
+          <Navbar />
+          {children}
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );

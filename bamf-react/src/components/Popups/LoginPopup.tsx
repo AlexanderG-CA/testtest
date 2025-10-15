@@ -2,21 +2,28 @@
 
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useAuth } from '@/contexts/AuthContext';
 
-export default function LoginPopup({ onSignupClick }: { onSignupClick: () => void }) {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+function LoginPopup({ onSignupClick }: { onSignupClick: () => void }) {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState("");
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const { login } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError("");
+        setError('');
         setIsLoading(true);
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const result = await login({ email, password });
+
+        if (!result.success) {
+            setError(result.error || 'Login failed');
+        }
+        // Note: On success, the login function in AuthContext will close the popup
+
         setIsLoading(false);
     };
 
@@ -153,3 +160,5 @@ export default function LoginPopup({ onSignupClick }: { onSignupClick: () => voi
         </div>
     );
 }
+
+export default LoginPopup;

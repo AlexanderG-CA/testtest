@@ -2,6 +2,7 @@
 import { useState } from "react";
 import LoginButton from "./LoginButton";
 import CartButton from "./CartButton";
+import Link from "next/link";
 
 export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -28,26 +29,26 @@ export default function Navbar() {
 
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex gap-8 text-sm font-medium">
-                        <a href="#shop" className="relative text-gray-300 transition-colors hover:text-white group">
+                        <Link href="/shop" className="relative text-gray-300 transition-colors hover:text-white group">
                             SHOP
                             <span className="absolute -bottom-1 left-0 w-0 h-0.5 transition-all group-hover:w-full"
                                 style={{ backgroundColor: "#362222" }}></span>
-                        </a>
-                        <a href="#collections" className="relative text-gray-300 transition-colors hover:text-white group">
+                        </Link>
+                        <Link href="/collections" className="relative text-gray-300 transition-colors hover:text-white group">
                             COLLECTIONS
                             <span className="absolute -bottom-1 left-0 w-0 h-0.5 transition-all group-hover:w-full"
                                 style={{ backgroundColor: "#362222" }}></span>
-                        </a>
-                        <a href="#about" className="relative text-gray-300 transition-colors hover:text-white group">
+                        </Link>
+                        <Link href="/about" className="relative text-gray-300 transition-colors hover:text-white group">
                             ABOUT
                             <span className="absolute -bottom-1 left-0 w-0 h-0.5 transition-all group-hover:w-full"
                                 style={{ backgroundColor: "#362222" }}></span>
-                        </a>
-                        <a href="#contact" className="relative text-gray-300 transition-colors hover:text-white group">
+                        </Link>
+                        <Link href="/contact" className="relative text-gray-300 transition-colors hover:text-white group">
                             CONTACT
                             <span className="absolute -bottom-1 left-0 w-0 h-0.5 transition-all group-hover:w-full"
                                 style={{ backgroundColor: "#362222" }}></span>
-                        </a>
+                        </Link>
                     </div>
 
                     {/* Cart Button & Mobile Menu Toggle */}
@@ -77,18 +78,18 @@ export default function Navbar() {
                 {isMenuOpen && (
                     <div className="md:hidden mt-4 pt-4 border-t space-y-3"
                         style={{ borderColor: "#362222" }}>
-                        <a href="#shop" className="block text-gray-300 hover:text-white transition-colors py-2">
+                        <Link href="/shop" className="block text-gray-300 hover:text-white transition-colors py-2">
                             SHOP
-                        </a>
-                        <a href="#collections" className="block text-gray-300 hover:text-white transition-colors py-2">
+                        </Link>
+                        <Link href="/collections" className="block text-gray-300 hover:text-white transition-colors py-2">
                             COLLECTIONS
-                        </a>
-                        <a href="#about" className="block text-gray-300 hover:text-white transition-colors py-2">
+                        </Link>
+                        <Link href="/about" className="block text-gray-300 hover:text-white transition-colors py-2">
                             ABOUT
-                        </a>
-                        <a href="#contact" className="block text-gray-300 hover:text-white transition-colors py-2">
+                        </Link>
+                        <Link href="/contact" className="block text-gray-300 hover:text-white transition-colors py-2">
                             CONTACT
-                        </a>
+                        </Link>
                         <div className="pt-4 border-t flex justify-center"
                             style={{ borderColor: "#362222" }}>
                             <LoginButton />
