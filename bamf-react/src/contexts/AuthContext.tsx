@@ -4,17 +4,17 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/auth.service';
-import { User, LoginDto, RegisterDto } from '@/types/api.types';
+import { UserFromToken } from '@/lib/api-client';
 
 interface AuthContextType {
-    user: User | null;
+    user: UserFromToken | null;
     isAuthenticated: boolean;
     isLoading: boolean;
     isAdmin: boolean;
     showLoginPopup: boolean;
     setShowLoginPopup: (show: boolean) => void;
-    login: (data: LoginDto) => Promise<{ success: boolean; error?: string }>;
-    register: (data: RegisterDto) => Promise<{ success: boolean; error?: string }>;
+    login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+    register: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
 }
@@ -22,13 +22,13 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<UserFromToken | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [showLoginPopup, setShowLoginPopup] = useState<boolean>(false);
     const router = useRouter();
 
-    // Check if user is admin (you can extend this based on your C# User model)
-    const isAdmin = user?.email?.includes('admin') || false; // Adjust based on your logic
+    // FIXED: Check role from JWT claim instead of email
+    const isAdmin = user?.role === 'Admin';
 
     // Check authentication status on mount
     const checkAuthStatus = useCallback(async () => {
@@ -52,20 +52,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         checkAuthStatus();
     }, [checkAuthStatus]);
 
-    // Login function
-    const login = async (data: LoginDto): Promise<{ success: boolean; error?: string }> => {
+    // FIXED: Login function with proper user object
+    const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
         try {
-            const response = await authService.login(data);
+            const response = await authService.login({ email, password });
 
             if (response.error) {
                 return { success: false, error: response.error };
             }
 
             if (response.data) {
-                setUser(response.data.user);
-                setShowLoginPopup(false); // Close the popup on successful login
-                router.push('/CHANGE-ME'); // Redirect to home after login //TODO: Change this
-                return { success: true };
+                // Get user from token after login
+                const userResponse = await authService.checkAuth();
+                if (userResponse.data) {
+                    setUser(userResponse.data);
+                    setShowLoginPopup(false);
+                    router.push('/profile');
+                    return { success: true };
+                }
             }
 
             return { success: false, error: 'Unknown error occurred' };
@@ -77,16 +81,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    // Register function
-    const register = async (data: RegisterDto): Promise<{ success: boolean; error?: string }> => {
+    // FIXED: Register function - auto-login after registration
+    const register = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
         try {
-            const response = await authService.register(data);
+            const response = await authService.register({ email, password });
 
             if (response.error) {
                 return { success: false, error: response.error };
             }
 
-            return { success: true };
+            // Auto-login after registration
+            const userResponse = await authService.checkAuth();
+            if (userResponse.data) {
+                setUser(userResponse.data);
+                setShowLoginPopup(false);
+                router.push('/profile');
+                return { success: true };
+            }
+
+            return { success: true }; // Registration succeeded even if auto-login fails
         } catch (error: any) {
             return {
                 success: false,
@@ -158,10 +171,9 @@ export function withAuth<P extends object>(
         useEffect(() => {
             if (!isLoading) {
                 if (!isAuthenticated) {
-                    // Show login popup instead of redirecting
                     setShowLoginPopup(true);
                 } else if (requireAdmin && !isAdmin) {
-                    router.push('/'); // Redirect non-admins
+                    router.push('/');
                 }
             }
         }, [isAuthenticated, isAdmin, isLoading, router, setShowLoginPopup]);

@@ -14,6 +14,19 @@ export interface ApiError {
     errors?: Record<string, string[]>;
 }
 
+// Backend auth response from C# (AuthResponseDto)
+interface BackendAuthResponse {
+    email: string;
+    token: string;
+}
+
+// User with role extracted from JWT
+export interface UserFromToken {
+    id?: number;
+    email?: string;
+    role?: string; // "User" or "Admin"
+}
+
 class ApiClient {
     private client: AxiosInstance;
     private tokenRefreshInProgress = false;
@@ -22,7 +35,7 @@ class ApiClient {
     constructor() {
         this.client = axios.create({
             baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://localhost:7039',
-            withCredentials: true, // Important for cookies
+            withCredentials: true,
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -52,7 +65,8 @@ class ApiClient {
 
                 // Don't intercept errors from login/register endpoints
                 const isAuthEndpoint = originalRequest.url?.includes('/api/auth/login') ||
-                    originalRequest.url?.includes('/api/auth/register');
+                    originalRequest.url?.includes('/api/auth/register') ||
+                    originalRequest.url?.includes('/api/auth/admin/login');
 
                 // If 401 and haven't retried yet, try to refresh token (but not for auth endpoints)
                 if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
@@ -133,9 +147,35 @@ class ApiClient {
             { withCredentials: true }
         );
 
-        const newToken = response.data.accessToken;
+        const newToken = response.data.token || response.data.accessToken;
         this.setToken(newToken);
         return newToken;
+    }
+
+    // Decode JWT to extract user info
+    private decodeJwt(token: string): any {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(
+                atob(base64)
+                    .split('')
+                    .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                    .join('')
+            );
+            return JSON.parse(jsonPayload);
+        } catch (error) {
+            console.error('Failed to decode JWT:', error);
+            return null;
+        }
+    }
+
+    // Normalize backend auth response to match frontend expectations
+    private normalizeAuthResponse(backendResponse: BackendAuthResponse): BackendAuthResponse {
+        return {
+            email: backendResponse.email,
+            token: backendResponse.token,
+        };
     }
 
     // Generic CRUD methods
@@ -200,41 +240,97 @@ class ApiClient {
     }
 
     // Auth specific methods
-    async login(email: string, password: string): Promise<ApiResponse<{ accessToken: string; refreshToken: string; user: any }>> {
-        const response = await this.post<{ accessToken: string; refreshToken: string; user: any }>(
-            '/api/auth/login',
-            { email, password }
-        );
+    async login(email: string, password: string): Promise<ApiResponse<BackendAuthResponse>> {
+        try {
+            const response = await this.client.post<BackendAuthResponse>(
+                '/api/auth/login',
+                { email, password }
+            );
 
-        if (response.data) {
-            this.setToken(response.data.accessToken);
+            const normalizedData = this.normalizeAuthResponse(response.data);
+
+            // Store tokens
+            this.setToken(normalizedData.token);
             if (typeof window !== 'undefined') {
-                localStorage.setItem('refreshToken', response.data.refreshToken);
+                localStorage.setItem('refreshToken', normalizedData.token);
             }
-        }
 
-        return response;
+            return {
+                data: normalizedData,
+                status: response.status
+            };
+        } catch (error) {
+            console.error('❌ API Client: Login failed:', error);
+            return this.handleError(error);
+        }
     }
 
     async logout(): Promise<void> {
         try {
-            await this.post('/api/auth/logout');
+            // Call logout endpoint if it exists on backend
+            /* await this.post('/api/auth/logout'); */
+        } catch (error) {
+            console.warn('Logout endpoint may not exist, clearing token locally:', error);
         } finally {
             this.clearToken();
         }
     }
 
-    async getCurrentUser<T>(): Promise<ApiResponse<T>> {
-        return this.get<T>('/api/auth/me');
+    // FIXED: Extract user info AND role from JWT
+    async getCurrentUser(): Promise<ApiResponse<UserFromToken>> {
+        const token = this.getToken();
+        if (!token) {
+            return { error: 'No token found', status: 401 };
+        }
+
+        const decoded = this.decodeJwt(token);
+        if (!decoded) {
+            return { error: 'Invalid token', status: 401 };
+        }
+
+        // Extract claims - C# uses these claim type URIs
+        const userId = decoded?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] ||
+            decoded?.nameid ||
+            decoded?.sub;
+
+        const userEmail = decoded?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] ||
+            decoded?.email;
+
+        // FIXED: Extract role from JWT
+        const userRole = decoded?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role'] ||
+            decoded?.role;
+
+        const user: UserFromToken = {
+            id: userId ? parseInt(userId) : undefined,
+            email: userEmail,
+            role: userRole, // "User" or "Admin"
+        };
+
+        return {
+            data: user,
+            status: 200
+        };
     }
 
     // Error handler
     private handleError(error: any): ApiResponse {
         if (axios.isAxiosError(error)) {
-            const axiosError = error as AxiosError<{ error?: string; errors?: Record<string, string[]> }>;
+            const axiosError = error as AxiosError<{ error?: string; errors?: Record<string, string[]>; message?: string }>;
+
+            const errorMessage =
+                axiosError.response?.data?.error ||
+                axiosError.response?.data?.message ||
+                axiosError.message ||
+                'An error occurred';
+
+            console.error('🚨 API Client Error:', {
+                status: axiosError.response?.status,
+                message: errorMessage,
+                url: axiosError.config?.url
+            });
 
             return {
-                error: axiosError.response?.data?.error || axiosError.message || 'An error occurred',
+                error: errorMessage,
                 status: axiosError.response?.status || 500,
             };
         }

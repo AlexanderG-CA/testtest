@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,12 +15,11 @@ function LoginPopup({ onSignupClick }: { onSignupClick: () => void }) {
         setError('');
         setIsLoading(true);
 
-        const result = await login({ email, password });
+        const result = await login(email, password);
 
         if (!result.success) {
             setError(result.error || 'Login failed');
         }
-        // Note: On success, the login function in AuthContext will close the popup
 
         setIsLoading(false);
     };
@@ -142,7 +139,11 @@ function LoginPopup({ onSignupClick }: { onSignupClick: () => void }) {
                     type="button"
                     className="text-white font-medium hover:underline transition-all cursor-pointer"
                     style={{ color: "#8B4545" }}
-                    onClick={onSignupClick}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onSignupClick();
+                    }}
                 >
                     SIGN UP
                 </button>

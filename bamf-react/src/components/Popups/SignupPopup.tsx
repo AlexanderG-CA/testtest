@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function SignupPopup({ onLoginClick }: { onLoginClick?: () => void }) {
     const [email, setEmail] = useState("");
@@ -12,6 +13,7 @@ export default function SignupPopup({ onLoginClick }: { onLoginClick?: () => voi
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [agreeToTerms, setAgreeToTerms] = useState(false);
+    const { register } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -28,8 +30,13 @@ export default function SignupPopup({ onLoginClick }: { onLoginClick?: () => voi
         }
 
         setIsLoading(true);
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        const result = await register(email, password);
+
+        if (!result.success) {
+            setError(result.error || 'Signup failed');
+        }
+
         setIsLoading(false);
     };
 
@@ -200,9 +207,13 @@ export default function SignupPopup({ onLoginClick }: { onLoginClick?: () => voi
                 Already have an account?{" "}
                 <button
                     type="button"
-                    onClick={onLoginClick}
                     className="text-white font-medium hover:underline transition-all cursor-pointer"
                     style={{ color: "#8B4545" }}
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onLoginClick?.();
+                    }}
                 >
                     LOGIN
                 </button>

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import LoginButton from "./LoginButton";
-import CartButton from "./CartButton";
+import CartButton from "./Cart/CartButton";
 import Link from "next/link";
 
 export default function Navbar() {
@@ -76,7 +76,7 @@ export default function Navbar() {
 
                 {/* Mobile Menu */}
                 {isMenuOpen && (
-                    <div className="md:hidden mt-4 pt-4 border-t space-y-3"
+                    <div className="md:hidden h-screen mt-4 pt-4 border-t space-y-3"
                         style={{ borderColor: "#362222" }}>
                         <Link href="/shop" className="block text-gray-300 hover:text-white transition-colors py-2">
                             SHOP
