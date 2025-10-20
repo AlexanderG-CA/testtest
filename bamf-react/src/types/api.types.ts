@@ -1,3 +1,5 @@
+// types/api.types.ts
+
 export interface User {
     id: number;
     email: string;
@@ -9,8 +11,19 @@ export interface Admin {
     userName: string;
 }
 
+export interface UserFromToken {
+    id: number;
+    email: string;
+    role?: string;
+}
+
 export interface LoginDto {
     email: string;
+    password: string;
+}
+
+export interface AdminLoginDto {
+    userName: string;
     password: string;
 }
 
@@ -18,4 +31,16 @@ export interface RegisterDto {
     email: string;
     password: string;
     confirmPassword: string;
+}
+
+// This matches what your backend ACTUALLY returns
+export interface AuthResponseDto {
+    email: string;
+    token: string;
+}
+
+export interface ApiResponse<T> {
+    data?: T;
+    error?: string;
+    status?: number;
 }

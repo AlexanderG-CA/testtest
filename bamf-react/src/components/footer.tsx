@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Footer() {
     return (
         <footer className="px-6 py-12 border-t"
@@ -8,19 +10,19 @@ export default function Footer() {
                         <h5 className="text-white font-bold mb-3 tracking-wider">SHOP</h5>
                         <ul className="space-y-2 text-sm text-gray-400">
                             <li>
-                                <a href="#" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
+                                <Link href="/new-arrivals" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
                                     New Arrivals
-                                </a>
+                                </Link>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
+                                <Link href="/best-sellers" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
                                     Best Sellers
-                                </a>
+                                </Link>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
+                                <Link href="/sale" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
                                     Sale
-                                </a>
+                                </Link>
                             </li>
                         </ul>
                     </div>
@@ -28,19 +30,19 @@ export default function Footer() {
                         <h5 className="text-white font-bold mb-3 tracking-wider">INFO</h5>
                         <ul className="space-y-2 text-sm text-gray-400">
                             <li>
-                                <a href="#" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
+                                <Link href="/about" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
                                     About Us
-                                </a>
+                                </Link>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
+                                <Link href="/shipping" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
                                     Shipping
-                                </a>
+                                </Link>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
+                                <Link href="/returns" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
                                     Returns
-                                </a>
+                                </Link>
                             </li>
                         </ul>
                     </div>
@@ -48,19 +50,19 @@ export default function Footer() {
                         <h5 className="text-white font-bold mb-3 tracking-wider">SUPPORT</h5>
                         <ul className="space-y-2 text-sm text-gray-400">
                             <li>
-                                <a href="#" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
+                                <Link href="/contact" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
                                     Contact
-                                </a>
+                                </Link>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
+                                <Link href="/faq" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
                                     FAQ
-                                </a>
+                                </Link>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
+                                <Link href="/size-guide" className="hover:text-white transition-all inline-block hover:translate-x-1 duration-200">
                                     Size Guide
-                                </a>
+                                </Link>
                             </li>
                         </ul>
                     </div>

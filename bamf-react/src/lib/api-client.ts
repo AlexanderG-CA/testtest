@@ -265,6 +265,32 @@ class ApiClient {
         }
     }
 
+    // Admin login method - separate from regular user login
+    async adminLogin(userName: string, password: string): Promise<ApiResponse<BackendAuthResponse>> {
+        try {
+            const response = await this.client.post<BackendAuthResponse>(
+                '/api/auth/admin/login',
+                { userName, password }
+            );
+
+            const normalizedData = this.normalizeAuthResponse(response.data);
+
+            // Store tokens
+            this.setToken(normalizedData.token);
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('refreshToken', normalizedData.token);
+            }
+
+            return {
+                data: normalizedData,
+                status: response.status
+            };
+        } catch (error) {
+            console.error('❌ API Client: Admin login failed:', error);
+            return this.handleError(error);
+        }
+    }
+
     async logout(): Promise<void> {
         try {
             // Call logout endpoint if it exists on backend

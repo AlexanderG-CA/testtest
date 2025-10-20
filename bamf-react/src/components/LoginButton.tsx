@@ -15,7 +15,7 @@ export default function LoginButton() {
     useEffect(() => {
         console.log('🔐 Auth State:', {
             isAuthenticated,
-            isAdmin: user?.role === 'admin',
+            isAdmin: user?.role?.toLocaleLowerCase() === 'admin',
             user,
             userRole: user?.role,
             tokens: {
@@ -102,6 +102,17 @@ export default function LoginButton() {
 
                             {/* Menu Items */}
                             <div className="py-1">
+                                {
+                                    user?.role?.toLowerCase() === 'admin' && (
+                                        <Link
+                                            onClick={() => setDropdownOpen(false)}
+                                            href="/admin"
+                                            className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#362222] transition-colors duration-200 flex items-center gap-2"
+                                        >
+                                            🛠️ <span>Admin Panel</span>
+                                        </Link>
+                                    )
+                                }
                                 <Link
                                     onClick={() => setDropdownOpen(false)}
                                     href="/profile"

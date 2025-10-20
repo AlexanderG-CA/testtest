@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/auth.service';
-import { UserFromToken } from '@/lib/api-client';
+import { UserFromToken } from '@/types/api.types';
 
 interface AuthContextType {
     user: UserFromToken | null;
@@ -15,6 +15,7 @@ interface AuthContextType {
     setShowLoginPopup: (show: boolean) => void;
     login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
     register: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+    adminLogin: (userName: string, password: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
 }
@@ -27,16 +28,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [showLoginPopup, setShowLoginPopup] = useState<boolean>(false);
     const router = useRouter();
 
-    // FIXED: Check role from JWT claim instead of email
-    const isAdmin = user?.role === 'Admin';
-
-    // Check authentication status on mount
     const checkAuthStatus = useCallback(async () => {
         try {
             const response = await authService.checkAuth();
-
             if (response.data) {
-                setUser(response.data);
+                setUser(response.data as UserFromToken);
             } else {
                 setUser(null);
             }
@@ -52,63 +48,57 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         checkAuthStatus();
     }, [checkAuthStatus]);
 
-    // FIXED: Login function with proper user object
     const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
         try {
             const response = await authService.login({ email, password });
 
-            if (response.error) {
-                return { success: false, error: response.error };
+            if (response.error || !response.data) {
+                return { success: false, error: response.error || 'Login failed' };
             }
 
-            if (response.data) {
-                // Get user from token after login
-                const userResponse = await authService.checkAuth();
-                if (userResponse.data) {
-                    setUser(userResponse.data);
-                    setShowLoginPopup(false);
-                    router.push('/profile');
-                    return { success: true };
-                }
-            }
-
-            return { success: false, error: 'Unknown error occurred' };
+            setUser(response.data as UserFromToken);
+            setShowLoginPopup(false);
+            router.push('/profile');
+            return { success: true };
         } catch (error: any) {
-            return {
-                success: false,
-                error: error.message || 'Login failed'
-            };
+            return { success: false, error: error.message || 'Login failed' };
         }
     };
 
-    // FIXED: Register function - auto-login after registration
     const register = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
         try {
-            const response = await authService.register({ email, password });
+            const response = await authService.register({ email, password, confirmPassword: password });
 
-            if (response.error) {
-                return { success: false, error: response.error };
+            if (response.error || !response.data) {
+                return { success: false, error: response.error || 'Registration failed' };
             }
 
-            // Auto-login after registration
-            const userResponse = await authService.checkAuth();
-            if (userResponse.data) {
-                setUser(userResponse.data);
-                setShowLoginPopup(false);
-                router.push('/profile');
-                return { success: true };
-            }
-
-            return { success: true }; // Registration succeeded even if auto-login fails
+            setUser(response.data as UserFromToken);
+            setShowLoginPopup(false);
+            router.push('/profile');
+            return { success: true };
         } catch (error: any) {
-            return {
-                success: false,
-                error: error.message || 'Registration failed'
-            };
+            return { success: false, error: error.message || 'Registration failed' };
         }
     };
 
-    // Logout function
+    const adminLogin = async (userName: string, password: string): Promise<{ success: boolean; error?: string }> => {
+        try {
+            const response = await authService.adminLogin({ userName, password });
+
+            if (response.error || !response.data) {
+                return { success: false, error: response.error || 'Admin login failed' };
+            }
+
+            setUser(response.data as UserFromToken);
+            setShowLoginPopup(false);
+            router.push('/admin/dashboard');
+            return { success: true };
+        } catch (error: any) {
+            return { success: false, error: error.message || 'Admin login failed' };
+        }
+    };
+
     const logout = async (): Promise<void> => {
         try {
             await authService.logout();
@@ -118,13 +108,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    // Refresh user data
     const refreshUser = async (): Promise<void> => {
         try {
             const response = await authService.checkAuth();
-
             if (response.data) {
-                setUser(response.data);
+                setUser(response.data as UserFromToken);
             } else {
                 setUser(null);
             }
@@ -133,6 +121,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setUser(null);
         }
     };
+
+    const isAdmin = user?.role === 'Admin';
 
     const value: AuthContextType = {
         user,
@@ -143,6 +133,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setShowLoginPopup,
         login,
         register,
+        adminLogin,
         logout,
         refreshUser,
     };
@@ -150,7 +141,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Custom hook to use auth context
 export const useAuth = (): AuthContextType => {
     const context = useContext(AuthContext);
     if (context === undefined) {
@@ -159,7 +149,6 @@ export const useAuth = (): AuthContextType => {
     return context;
 };
 
-// HOC for protected routes
 export function withAuth<P extends object>(
     Component: React.ComponentType<P>,
     requireAdmin = false
