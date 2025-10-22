@@ -21,6 +21,7 @@ function LoginPopup({ onSignupClick }: { onSignupClick: () => void }) {
             setError(result.error || 'Login failed');
         }
 
+        
         setIsLoading(false);
     };
 

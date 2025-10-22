@@ -33,7 +33,6 @@ export interface RegisterDto {
     confirmPassword: string;
 }
 
-// This matches what your backend ACTUALLY returns
 export interface AuthResponseDto {
     email: string;
     token: string;
